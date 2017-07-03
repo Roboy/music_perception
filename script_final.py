@@ -4,12 +4,15 @@
 
 import librosa
 import numpy
-import matplotlib.pylab as plt
-import pdb
+import matplotlib.pyplot as plt
+import ipdb
 import webrtcvad
-
-
-
+import time
+import vlc
+import mir_eval
+import IPython.display as ipd
+import sounddevice as sd
+import urllib
 
 def extract_max(pitches,magnitudes, shape):
     new_pitches = []
@@ -38,7 +41,7 @@ def plot(vector, name, xlabel=None, ylabel=None):
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.plot()
-    plt.savefig(name)
+    # plt.savefig(name)
 
 def set_variables(sample_f,duration,window_time,fmin,fmax,overlap):
     total_samples = sample_f * duration
@@ -54,7 +57,7 @@ def set_variables(sample_f,duration,window_time,fmin,fmax,overlap):
 def analyse(y,sr,n_fft,hop_length,fmin,fmax):
     pitches, magnitudes = librosa.core.piptrack(y=y, sr=sr, S=None, n_fft= n_fft, hop_length=hop_length, fmin=fmin, fmax=fmax, threshold=0.75)
 
-    tempo, beat_frames = librosa.beat.beat_track(y, sr, start_bpm=60)
+    tempo, beat_frames = librosa.beat.beat_track(y, sr, start_bpm=40)
     beat_samples = librosa.frames_to_samples(beat_frames)
 
     shape = numpy.shape(pitches)
@@ -69,28 +72,46 @@ def analyse(y,sr,n_fft,hop_length,fmin,fmax):
     pitches3 = smooth(pitches,window_len=30)
     pitches4 = smooth(pitches,window_len=40)
 
-    vad = webrtcvad.Vad()
-    frame_duration = 20  # ms
-    frame = b'\x00\x00' * (sr * frame_duration / 1000)
-    print 'Contains speech: %s' % (vad.is_speech(frame, sr))
+    # vad = webrtcvad.Vad()
+    # frame_duration = 20  # ms
+    # frame = b'\x00\x00' * (sr * frame_duration / 1000)
+    # print 'Contains speech: %s' % (vad.is_speech(frame, sr))
 
     # pdb.set_trace()
-    plot(pitches1, 'pitches1')
-    plot(pitches2, 'pitches2')
-    plot(pitches3, 'pitches3')
-    plot(pitches4, 'pitches4')
-    plot(magnitudes, 'magnitudes')
-    plot( y, 'audio')
-    plt.vlines(beat_samples, -1, 1, color='r')
-    plt.show()
+    # plt.ion()
+    # start = time.time()
+    # x = numpy.arange(0, duration, duration/len(pitches1))
+    # plt.plot(pitches1)
+    # pdb.set_trace()
+    # for i in range(len(pitches1)):
+    #     plt.scatter(i, pitches1[i])
+    #     # plt.pause(0.000001)
+    # print "elapsed", time.time() - start
+
+    # pdb.set_trace()
+    # plot(pitches1, 'pitches1')
+    # plot(pitches2, 'pitches2')
+    # plot(pitches3, 'pitches3')
+    # plot(pitches4, 'pitches4')
+    # plot(magnitudes, 'magnitudes')
+    # plot( y, 'audio')
+    # plt.vlines(beat_samples, -1, 1, color='r')
+    # plt.show()
+
+    return pitches4, beat_frames, tempo
 
 def main():
+
+    file = './iron.mp3'
+    urllib.urlretrieve('http://audio.musicinformationretrieval.com/1_bar_funk_groove.mp3', 
+                    filename='test.mp3')
     #Set all wanted variables
 
     #we want a sample frequency of 16 000
     sample_f = 16000
     #The duration of the voice sample
-    duration = 30
+    global duration
+    duration = 10
     #We want a windowsize of 30 ms
     window_time = 60
     fmin = 80
@@ -102,11 +123,45 @@ def main():
 
     # y = audio time series
     # sr = sampling rate of y
-    y, sr = librosa.load('./test1.mp3', sr=sample_f, duration=duration)
+    y, sr = librosa.load(file)
     #y1, sr1 = librosa.load('./1', sr=sample_f, duration=duration)
 
-    analyse(y, sr, n_fft, hop_length, fmin, fmax)
-    # analyse(y1, sr1, n_fft, hop_length, fmin, fmax)
+    tempo, beat_frames = librosa.beat.beat_track(y, sr, start_bpm=60)
+    beat_times = librosa.frames_to_time(beat_frames)
+    clicks = mir_eval.sonify.clicks(beat_times, sr, length=len(y))
+    sd.play(clicks+y, sr)
+
+
+    pitch, beat, tempo = analyse(y, sr, n_fft, hop_length, fmin, fmax)
+
+    tempo, beat_frames = librosa.beat.beat_track(y, sr)
+    beat_times = librosa.frames_to_time(beat_frames)
+    clicks = mir_eval.sonify.clicks(beat_times, sr, length=len(y))
+    sd.play(clicks+y, sr)
+
+    beats = ipd.Audio(y+clicks, rate=sr)
+    ipdb.set_trace()
+
+    # song = vlc.MediaPlayer(file)
+    # # ipdb.set_trace()
+    # beat = vlc.MediaPlayer(beats)
+    # song.play()
+    # beat.play()
+
+    # i = 0
+    # time.sleep(1.2)
+    # start = time.time()
+    # # pdb.set_trace()
+    
+    # while (abs(time.time() - start) < duration):
+    #     x = time.time() - start
+    #     if (i < len(beat_times) and abs(x - beat_times[i]) < 0.00001):
+    #         # print x 
+    #         # print beat_times[i] 
+    #         print "bam"
+    #         i += 1
+
+
 
 
 
