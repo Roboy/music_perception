@@ -1,10 +1,10 @@
 import librosa
 import numpy
 import matplotlib.pyplot as plt
-import ipdb
+import pdb
 import webrtcvad
 import time
-import vlc
+# imprt vlc
 import mir_eval
 import IPython.display as ipd
 import sounddevice as sd
@@ -36,14 +36,14 @@ def smooth(x,window_len=11,window='hanning'):
 file = './iron.mp3'
 urllib.urlretrieve('http://audio.musicinformationretrieval.com/1_bar_funk_groove.mp3', 
                     filename='test.mp3')
-duration = 300
+duration = 350
 y, sr = librosa.load(file)
 #y1, sr1 = librosa.load('./1', sr=sample_f, duration=duration)
 
 tempo, beat_frames = librosa.beat.beat_track(y, sr, start_bpm=60)
 beat_times = librosa.frames_to_time(beat_frames)
 clicks = mir_eval.sonify.clicks(beat_times, sr, length=len(y))
-# sd.play(clicks+y, sr)
+
 # while True:
 # 	time.sleep(100)
 
@@ -56,8 +56,10 @@ nb_windows = shape[1]
 pitches, magnitudes = extract_max(pitches, magnitudes, shape)
 
 pitches1 = smooth(pitches,window_len=10)
- 
-ipdb.set_trace()
+sd.play(clicks+y, sr) 
+time.sleep(1)
+i = 0
+start = time.time()
 while (abs(time.time() - start) < duration):
     x = time.time() - start
     if (i < len(beat_times) and abs(x - beat_times[i]) < 0.00001):
@@ -68,4 +70,4 @@ while (abs(time.time() - start) < duration):
 
 # plt.plot(magnitudes)
 # plt.show()
-# ipdb.set_trace()
+# pdb.set_trace()
