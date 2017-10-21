@@ -1,3 +1,4 @@
 librosa
 mir_eval
 sounddevice
+webrtcvad

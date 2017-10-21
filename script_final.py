@@ -5,7 +5,7 @@
 import librosa
 import numpy
 import matplotlib.pyplot as plt
-import ipdb
+import pdb
 import webrtcvad
 import time
 import vlc
@@ -140,7 +140,7 @@ def main():
     sd.play(clicks+y, sr)
 
     beats = ipd.Audio(y+clicks, rate=sr)
-    ipdb.set_trace()
+    pdb.set_trace()
 
     # song = vlc.MediaPlayer(file)
     # # ipdb.set_trace()
